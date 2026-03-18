@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Spoons">
+<title>My Spoons</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Petit+Formal+Script&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --lavender: #e0d4f0;
+    --lavender-deep: #b8a0d8;
+    --lavender-soft: #f4f0fc;
+    --sage: #c8d8c0;
+    --sage-deep: #8aaa80;
+    --sage-soft: #eaf2e8;
+    --periwinkle: #c8d0f0;
+    --periwinkle-deep: #8090c8;
+    --blush: #f0d8e8;
+    --blush-deep: #c898b8;
+    --cream: #faf6fe;
+    --warm-white: #fefcff;
+    --text-dark: #3a2d4a;
+    --text-mid: #6a5580;
+    --text-soft: #9a88b0;
+    --gold: #c8a86a;
+    --gold-light: #ecddb0;
+    --spoon-yellow: #f5e8a0;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    color: var(--text-dark);
+    background-image:
+      radial-gradient(ellipse at 15% 15%, rgba(224,212,240,0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 85%, rgba(200,216,192,0.35) 0%, transparent 50%);
+  }
+
+  /* App shell */
+  .app {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    max-width: 430px;
+    margin: 0 auto;
+    background: var(--warm-white);
+    box-shadow: 0 0 40px rgba(100,80,140,0.12);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: rgba(254,252,255,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(180,160,210,0.15);
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.45;
+  }
+
+  .tab.active { opacity: 1; }
+
+  .tab-icon { font-size: 20px; }
+
+  .tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--text-mid);
+  }
+
+  .tab.active .tab-label { color: var(--lavender-deep); font-weight: 600; }
+
+  /* Screens */
+  .screen {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+
+  .screen.active { display: block; }
+
+  /* Screen header */
+  .screen-header {
+    text-align: center;
+    padding: 24px 20px 16px;
+    background: linear-gradient(180deg, rgba(224,212,240,0.2) 0%, transparent 100%);
+  }
+
+  .screen-title {
+    font-family: 'Petit Formal Script', cursive;
+    font-size: 30px;
+    color: var(--text-mid);
+    line-height: 1.2;
+  }
+
+  .screen-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-top: 2px;
+  }
+
+  /* === SPOONS SCREEN === */
+  .spoon-status {
+    margin: 0 16px 16px;
+    background: linear-gradient(135deg, rgba(245,232,160,0.25), rgba(236,221,176,0.18));
+    border: 1px solid rgba(200,168,106,0.2);
+    border-radius: 18px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+
+  .status-message {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text-mid);
+    line-height: 1.5;
+    margin-bottom: 14px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spoons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .spoon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(224,212,240,0.4);
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(184,160,216,0.2);
+  }
+
+  .spoon-btn.used {
+    background: rgba(180,160,180,0.12);
+    box-shadow: none;
+    filter: grayscale(1) opacity(0.3);
+    transform: rotate(180deg);
+  }
+
+  .spoon-btn:active { transform: scale(0.9); }
+  .spoon-btn.used:active { transform: rotate(180deg) scale(0.9); }
+
+  .spoon-count {
+    font-size: 12px;
+    color: var(--text-soft);
+    letter-spacing: 0.05em;
+  }
+
+  .reset-btn {
+    margin-top: 10px;
+    background: none;
+    border: 1px solid rgba(184,160,216,0.3);
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 11.5px;
+    color: var(--text-soft);
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  /* Quick reminders */
+  .reminders-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0 16px 16px;
+  }
+
+  .reminder-card {
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    border: 1px solid transparent;
+  }
+
+  .r-water { background: rgba(200,208,240,0.25); border-color: rgba(128,144,200,0.2); }
+  .r-stim { background: rgba(224,212,240,0.25); border-color: rgba(184,160,216,0.2); }
+  .r-nest { background: rgba(200,216,192,0.25); border-color: rgba(138,170,128,0.2); }
+  .r-check { background: rgba(240,216,232,0.25); border-color: rgba(200,152,184,0.2); }
+
+  .r-emoji { font-size: 22px; display: block; margin-bottom: 5px; }
+  .r-title { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--text-dark); margin-bottom: 2px; }
+  .r-text { font-size: 11px; color: var(--text-soft); line-height: 1.4; font-weight: 300; }
+
+  /* === COSTS SCREEN === */
+  .costs-list {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cost-item {
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ci-high { background: rgba(240,216,232,0.25); border-color: rgba(200,152,184,0.2); }
+  .ci-med { background: rgba(200,208,240,0.2); border-color: rgba(128,144,200,0.18); }
+  .ci-low { background: rgba(224,212,240,0.18); border-color: rgba(184,160,216,0.18); }
+
+  .ci-emoji { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+
+  .ci-content { flex: 1; }
+
+  .ci-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+  }
+
+  .ci-detail {
+    font-size: 11.5px;
+    color: var(--text-soft);
+    line-height: 1.45;
+    font-weight: 300;
+    margin-bottom: 5px;
+  }
+
+  .ci-dots { display: flex; gap: 3px; }
+  .ci-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-h { background: var(--blush-deep); opacity: 0.75; }
+  .dot-m { background: var(--periwinkle-deep); opacity: 0.65; }
+  .dot-l { background: var(--lavender-deep); opacity: 0.6; }
+
+  .section-label {
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    padding: 8px 16px 4px;
+    font-weight: 600;
+  }
+
+  /* === RESTORE SCREEN === */
+  .restore-list {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .restore-item {
+    background: linear-gradient(135deg, rgba(200,216,192,0.22), rgba(168,200,160,0.12));
+    border: 1px solid rgba(138,170,128,0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .restore-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--sage), var(--sage-deep));
+    border-radius: 14px 0 0 14px;
+  }
+
+  .ri-emoji { font-size: 22px; flex-shrink: 0; }
+  .ri-content { flex: 1; }
+  .ri-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--text-dark); margin-bottom: 2px; }
+  .ri-detail { font-size: 11.5px; color: var(--text-soft); line-height: 1.45; font-weight: 300; margin-bottom: 4px; }
+  .ri-spoons { font-size: 11px; color: var(--sage-deep); font-weight: 600; }
+
+  /* === NEST SCREEN === */
+  .nest-content { padding: 0 16px; }
+
+  .nest-intro {
+    background: linear-gradient(135deg, rgba(224,212,240,0.22), rgba(200,208,240,0.15));
+    border: 1px solid rgba(184,160,216,0.22);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--text-mid);
+    line-height: 1.65;
+    text-align: center;
+  }
+
+  .nest-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .nest-step {
+    background: rgba(253,246,250,0.8);
+    border: 1px solid rgba(184,160,216,0.15);
+    border-radius: 13px;
+    padding: 13px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ns-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--lavender), var(--lavender-deep));
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .ns-text { flex: 1; font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+  .ns-text strong { color: var(--text-dark); font-weight: 600; }
+
+  .rules-section {
+    background: linear-gradient(135deg, rgba(245,232,160,0.18), rgba(236,221,176,0.12));
+    border: 1px solid rgba(200,168,106,0.18);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .rules-title-small {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-mid);
+    line-height: 1.5;
+    margin-bottom: 7px;
+  }
+
+  .rule-item:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SPOONS SCREEN -->
+  <div class="screen active" id="screen-spoons">
+    <div class="screen-header">
+      <div class="screen-title">My Spoons</div>
+      <div class="screen-sub">today's energy map</div>
+    </div>
+
+    <div class="spoon-status">
+      <div class="status-message" id="status-msg">10 spoons — use them with intention 🌿</div>
+      <div class="spoons-grid" id="spoons-grid"></div>
+      <div class="spoon-count" id="spoon-count">10 remaining</div>
+      <button class="reset-btn" onclick="resetSpoons()">reset for today ↺</button>
+    </div>
+
+    <div class="reminders-row">
+      <div class="reminder-card r-water">
+        <span class="r-emoji">💧</span>
+        <div class="r-title">Drink Water</div>
+        <div class="r-text">Right now. Before anything else.</div>
+      </div>
+      <div class="reminder-card r-stim">
+        <span class="r-emoji">🤲</span>
+        <div class="r-title">Stim Freely</div>
+        <div class="r-text">Feet, fingers, jaw. Let your body regulate.</div>
+      </div>
+      <div class="reminder-card r-nest">
+        <span class="r-emoji">🪺</span>
+        <div class="r-title">Nest If Needed</div>
+        <div class="r-text">Blanket, earbuds, pillow. You are allowed.</div>
+      </div>
+      <div class="reminder-card r-check">
+        <span class="r-emoji">🌸</span>
+        <div class="r-title">Check In</div>
+        <div class="r-text">How full is your jar, honestly?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COSTS SCREEN -->
+  <div class="screen" id="screen-costs">
+    <div class="screen-header">
+      <div class="screen-title">Spoon Costs</div>
+      <div class="screen-sub">what drains you</div>
+    </div>
+    <div class="costs-list">
+
+      <div class="section-label">🔴 High Cost</div>
+
+      <div class="cost-item ci-high">
+        <span class="ci-emoji">🌀</span>
+        <div class="ci-content">
+          <div class="ci-name">Unstructured Social</div>
+          <div class="ci-detail">No baseline, ambiguous register. You generate all the scaffolding yourself.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-high">
+        <span class="ci-emoji">📢</span>
+        <div class="ci-content">
+          <div class="ci-name">Stimulating Environments</div>
+          <div class="ci-detail">Loud rooms, strong perfumes, unpredictable noise. Your system processes all of it.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-high">
+        <span class="ci-emoji">⚡</span>
+        <div class="ci-content">
+          <div class="ci-name">Spontaneous Plans</div>
+          <div class="ci-detail">No context means threat-monitoring the entire time. Costs before it even starts.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-high">
+        <span class="ci-emoji">🎓</span>
+        <div class="ci-content">
+          <div class="ci-name">Long Classes</div>
+          <div class="ci-detail">Sustained sensory load, social monitoring, masking. Deferred cost always follows.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div><div class="ci-dot dot-h"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">🟡 Medium Cost</div>
+
+      <div class="cost-item ci-med">
+        <span class="ci-emoji">💬</span>
+        <div class="ci-content">
+          <div class="ci-name">Structured Social</div>
+          <div class="ci-detail">Fun but still performing. The performing layer always costs something.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-m"></div><div class="ci-dot dot-m"></div><div class="ci-dot dot-m"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-med">
+        <span class="ci-emoji">📱</span>
+        <div class="ci-content">
+          <div class="ci-name">Online Socialising</div>
+          <div class="ci-detail">Lower than in-person but messages feel like demands when depleted.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-m"></div><div class="ci-dot dot-m"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">🟣 Hidden Cost</div>
+
+      <div class="cost-item ci-low">
+        <span class="ci-emoji">🔁</span>
+        <div class="ci-content">
+          <div class="ci-name">Rumination</div>
+          <div class="ci-detail">Replaying and pre-fixing drains spoons even at rest. Needs active displacement.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-l"></div><div class="ci-dot dot-l"></div><div class="ci-dot dot-l"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-low">
+        <span class="ci-emoji">🎭</span>
+        <div class="ci-content">
+          <div class="ci-name">Masking All Day</div>
+          <div class="ci-detail">The performing layer runs quietly in the background. Always accumulating.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-l"></div><div class="ci-dot dot-l"></div><div class="ci-dot dot-l"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-item ci-low">
+        <span class="ci-emoji">🌫️</span>
+        <div class="ci-content">
+          <div class="ci-name">Sensory Baseline</div>
+          <div class="ci-detail">Even quiet environments cost something. Your system is always monitoring.</div>
+          <div class="ci-dots">
+            <div class="ci-dot dot-l"></div><div class="ci-dot dot-l"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESTORE SCREEN -->
+  <div class="screen" id="screen-restore">
+    <div class="screen-header">
+      <div class="screen-title">Restore</div>
+      <div class="screen-sub">what gives spoons back</div>
+    </div>
+    <div class="restore-list">
+
+      <div class="restore-item">
+        <span class="ri-emoji">🩰</span>
+        <div class="ri-content">
+          <div class="ri-name">Ballet & Stretching</div>
+          <div class="ri-detail">Rhythmic, physical, absorbing. Regulates through movement and deep pressure. Displaces rumination completely.</div>
+          <div class="ri-spoons">+++ restores significantly</div>
+        </div>
+      </div>
+
+      <div class="restore-item">
+        <span class="ri-emoji">🏡</span>
+        <div class="ri-content">
+          <div class="ri-name">Being Alone at Home</div>
+          <div class="ri-detail">No masking. No monitoring. No performing. Your nervous system gets to fully stop. Essential, not optional.</div>
+          <div class="ri-spoons">+++ restores significantly</div>
+        </div>
+      </div>
+
+      <div class="restore-item">
+        <span class="ri-emoji">🎮</span>
+        <div class="ri-content">
+          <div class="ri-name">Cozy Games</div>
+          <div class="ri-detail">Stardew, Animal Crossing, SoulSilver. Structured, predictable, absorbing enough to displace the loop.</div>
+          <div class="ri-spoons">++ restores well</div>
+        </div>
+      </div>
+
+      <div class="restore-item">
+        <span class="ri-emoji">🎵</span>
+        <div class="ri-content">
+          <div class="ri-name">Music & Singing</div>
+          <div class="ri-detail">Familiar songs only. Your nervous system rests inside what it already knows. Singing adds physical regulation.</div>
+          <div class="ri-spoons">++ restores well</div>
+        </div>
+      </div>
+
+      <div class="restore-item">
+        <span class="ri-emoji">📖</span>
+        <div class="ri-content">
+          <div class="ri-name">Fanfiction & Reading</div>
+          <div class="ri-detail">Earbuds in, nook set up, tending session only. Full immersion displaces everything else.</div>
+          <div class="ri-spoons">++ restores when conditions are right</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NEST SCREEN -->
+  <div class="screen" id="screen-nest">
+    <div class="screen-header">
+      <div class="screen-title">Nest Mode</div>
+      <div class="screen-sub">when spoons are very low</div>
+    </div>
+    <div class="nest-content">
+
+      <div class="nest-intro">
+        You don't need to understand it right now.<br>
+        Just follow the next step. One thing at a time.
+      </div>
+
+      <div class="nest-steps">
+        <div class="nest-step">
+          <div class="ns-num">1</div>
+          <div class="ns-text"><strong>Earbuds in.</strong> Right now, before anything else. Reduce what your system has to process.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">2</div>
+          <div class="ns-text"><strong>Go to your softest spot.</strong> Blanket on. Pillow against your front. Hood up if you have one.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">3</div>
+          <div class="ns-text"><strong>Drink water.</strong> Eat something small if you haven't. Your body was working hard.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">4</div>
+          <div class="ns-text"><strong>One familiar song.</strong> Not a playlist. Something your brain already knows — just rest inside it.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">5</div>
+          <div class="ns-text"><strong>Stim freely.</strong> Feet, fingers, face. Your body is regulating. Don't interrupt it.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">6</div>
+          <div class="ns-text"><strong>Phone face down.</strong> Messages can wait. You are not available right now. That is allowed.</div>
+        </div>
+        <div class="nest-step">
+          <div class="ns-num">7</div>
+          <div class="ns-text"><strong>Stay until the static quiets.</strong> Not until a timer goes off — your body will tell you when it's ready.</div>
+        </div>
+      </div>
+
+      <div class="rules-section">
+        <div class="rules-title-small">🥄 remember</div>
+        <div class="rule-item"><span>🌸</span>Accommodate before depletion, not after.</div>
+        <div class="rule-item"><span>🌸</span>A burrow day after outings is scheduled, not earned.</div>
+        <div class="rule-item"><span>🌸</span>Cozy games and music are how you get spoons back.</div>
+        <div class="rule-item"><span>🌸</span>You do not owe anyone a full jar.</div>
+        <div class="rule-item"><span>🌸</span>You have come back from this before. You will now too.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab active" id="tab-spoons" onclick="switchTab('spoons')">
+      <span class="tab-icon">🥄</span>
+      <span class="tab-label">Spoons</span>
+    </div>
+    <div class="tab" id="tab-costs" onclick="switchTab('costs')">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">Costs</span>
+    </div>
+    <div class="tab" id="tab-restore" onclick="switchTab('restore')">
+      <span class="tab-icon">🌿</span>
+      <span class="tab-label">Restore</span>
+    </div>
+    <div class="tab" id="tab-nest" onclick="switchTab('nest')">
+      <span class="tab-icon">🪺</span>
+      <span class="tab-label">Nest</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL = 10;
+  let used = 0;
+
+  // Build spoon buttons
+  const grid = document.getElementById('spoons-grid');
+  for (let i = 0; i < TOTAL; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'spoon-btn';
+    btn.textContent = '🥄';
+    btn.setAttribute('aria-label', 'Spoon ' + (i + 1));
+    btn.addEventListener('click', () => toggleSpoon(btn));
+    grid.appendChild(btn);
+  }
+
+  function toggleSpoon(btn) {
+    btn.classList.toggle('used');
+    updateStatus();
+  }
+
+  function updateStatus() {
+    const buttons = document.querySelectorAll('.spoon-btn');
+    used = document.querySelectorAll('.spoon-btn.used').length;
+    const remaining = TOTAL - used;
+    const msg = document.getElementById('status-msg');
+    const count = document.getElementById('spoon-count');
+
+    count.textContent = remaining + ' remaining';
+
+    if (remaining === TOTAL) {
+      msg.textContent = '10 spoons — use them with intention 🌿';
+    } else if (remaining >= 8) {
+      msg.textContent = 'You\'re doing okay — still plenty to work with 🌸';
+    } else if (remaining >= 6) {
+      msg.textContent = 'Halfway there — be intentional with what\'s left ✨';
+    } else if (remaining >= 4) {
+      msg.textContent = 'Getting low — start thinking about restoring 🎵';
+    } else if (remaining >= 2) {
+      msg.textContent = 'Almost empty — nesting time. Earbuds in 🪺';
+    } else if (remaining === 1) {
+      msg.textContent = 'One spoon left — go nest. You are allowed to stop 💜';
+    } else {
+      msg.textContent = 'No spoons left — nest now. You\'ve done enough today 🌿';
+    }
+  }
+
+  function resetSpoons() {
+    document.querySelectorAll('.spoon-btn').forEach(btn => btn.classList.remove('used'));
+    updateStatus();
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('screen-' + name).scrollTop = 0;
+  }
+</script>
+</body>
+</html>
